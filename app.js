@@ -1,5 +1,3 @@
-// app.js completo com filtros, ordenação, cores nos status, totais e correção de caractere inválido
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
@@ -18,10 +16,18 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-app.use(bodyParser.urlencoded({ extended: true }));
+// ✅ Serve corretamente a pasta PUBLIC (para /imagens/ funcionar)
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
+// Middleware de sessão e body parser
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({ secret: 'esportepremium2024', resave: false, saveUninitialized: true }));
 
+// Rota de pedido via formulário
 app.post('/api/pedido', async (req, res) => {
   const { nome, modelo, tamanho, personalizacao, observacoes } = req.body;
   try {
@@ -29,14 +35,17 @@ app.post('/api/pedido', async (req, res) => {
       `INSERT INTO pedidos (nome, modelo, tamanho, personalizacao, observacoes, status_envio) VALUES ($1, $2, $3, $4, $5, 'Aguardando pedido')`,
       [nome, modelo, tamanho, personalizacao, observacoes]
     );
+
     const mensagem = `Novo Pedido de Camisa:%0A👤 Nome: ${nome}%0A👕 Modelo: ${modelo}%0A📏 Tamanho: ${tamanho}%0A✍️ Personalização: ${personalizacao || 'Nenhuma'}%0A📝 Observações: ${observacoes || 'Nenhuma'}`;
     const whatsappLink = `https://wa.me/5531992537858?text=${mensagem}`;
     res.redirect(whatsappLink);
   } catch (err) {
+    console.error('Erro ao salvar pedido:', err.message);
     res.status(500).send('Erro ao salvar o pedido.');
   }
 });
 
+// Rota login admin
 app.get('/admin/login', (req, res) => {
   res.send(`
     <form method="post" action="/admin/login" style="max-width:400px;margin:auto;margin-top:100px;font-family:sans-serif">
@@ -58,6 +67,7 @@ app.post('/admin/login', (req, res) => {
   }
 });
 
+// Rota principal de pedidos
 app.get('/admin/pedidos', async (req, res) => {
   if (!req.session.authenticated) return res.redirect('/admin/login');
 
@@ -94,10 +104,10 @@ app.get('/admin/pedidos', async (req, res) => {
   html += `
     <table border="1" cellspacing="0" cellpadding="8" style="width:98%;margin:auto;font-family:sans-serif;text-align:left">
     <thead>
-    <tr>
-      <th>ID</th><th>Nome</th><th>Modelo</th><th>Tamanho</th><th>Personalização</th><th>Observações</th>
-      <th><a href="?sort=valor">Valor Vendido</a></th><th>Valor Pago</th><th>Status Envio</th><th>Código Rastreio</th><th><a href="?sort=data">Data</a></th><th>Ações</th>
-    </tr>
+      <tr>
+        <th>ID</th><th>Nome</th><th>Modelo</th><th>Tamanho</th><th>Personalização</th><th>Observações</th>
+        <th><a href="?sort=valor">Valor Vendido</a></th><th>Valor Pago</th><th>Status Envio</th><th>Código Rastreio</th><th><a href="?sort=data">Data</a></th><th>Ações</th>
+      </tr>
     </thead>
     <tbody>
   `;
@@ -140,39 +150,45 @@ app.get('/admin/pedidos', async (req, res) => {
     `;
   });
 
-  html += `</tbody>
+  html += `
+    </tbody>
     <tfoot>
       <tr><td colspan="6"><strong>Totais</strong></td>
-          <td><strong>R$ ${totalVendido.toFixed(2)}</strong></td>
-          <td><strong>R$ ${totalPago.toFixed(2)}</strong></td>
-          <td colspan="4"></td></tr>
+      <td><strong>R$ ${totalVendido.toFixed(2)}</strong></td>
+      <td><strong>R$ ${totalPago.toFixed(2)}</strong></td>
+      <td colspan="4"></td></tr>
     </tfoot>
-  </table>`;
+    </table>
+  `;
 
   res.send(html);
 });
 
+// Atualização de pedido
 app.post('/admin/update', async (req, res) => {
   const parseOrNull = (v) => v === "" ? null : v;
   const { id, valor_vendido, valor_pago, status_envio, codigo_rastreio } = req.body;
-  await pool.query(`
-    UPDATE pedidos SET valor_vendido=$1, valor_pago=$2, status_envio=$3, codigo_rastreio=$4 WHERE id=$5
-  `, [
-    parseOrNull(valor_vendido),
-    parseOrNull(valor_pago),
-    status_envio,
-    codigo_rastreio,
-    id
-  ]);
+
+  try {
+    await pool.query(
+      `UPDATE pedidos SET valor_vendido=$1, valor_pago=$2, status_envio=$3, codigo_rastreio=$4 WHERE id=$5`,
+      [parseOrNull(valor_vendido), parseOrNull(valor_pago), status_envio, codigo_rastreio, id]
+    );
+  } catch (err) {
+    console.error('Erro ao atualizar pedido:', err.message);
+  }
+
   res.redirect('/admin/pedidos');
 });
 
+// Exclusão
 app.get('/admin/delete/:id', async (req, res) => {
   const id = req.params.id;
   await pool.query('DELETE FROM pedidos WHERE id=$1', [id]);
   res.redirect('/admin/pedidos');
 });
 
+// Inicialização
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });

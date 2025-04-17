@@ -16,7 +16,6 @@
       min-height: 100vh;
       color: white;
     }
-
     header {
       width: 100%;
       background-color: #000000;
@@ -25,7 +24,6 @@
       text-align: center;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
-
     form {
       background: #111111;
       color: white;
@@ -36,14 +34,12 @@
       max-width: 500px;
       width: 90%;
     }
-
     label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
       color: #FFD700;
     }
-
     input, select, textarea {
       width: 100%;
       padding: 10px;
@@ -54,7 +50,6 @@
       background-color: #1a1a1a;
       color: white;
     }
-
     button {
       width: 100%;
       padding: 12px;
@@ -68,17 +63,30 @@
       transition: background 0.3s ease;
       margin-bottom: 10px;
     }
-
     button:hover {
       background-color: #e6c200;
     }
-
     img {
       display: block;
       margin: 0 auto 1rem;
       max-width: 200px;
       border-radius: 8px;
       box-shadow: 0 0 8px rgba(255,215,0,0.4);
+    }
+    table {
+      width: 90%;
+      margin: 1rem auto;
+      border-collapse: collapse;
+      background-color: #1a1a1a;
+      color: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #FFD700;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
     }
   </style>
 </head>
@@ -119,6 +127,8 @@
     <button type="button" onclick="finalizarPedidos()">Finalizar e Enviar</button>
   </form>
 
+  <div id="tabelaPedidos" style="max-width: 900px; width: 100%;"></div>
+
   <script>
     const pedidos = [];
     const imagensPorModelo = {
@@ -148,12 +158,26 @@
       }
 
       pedidos.push({ nome, modelo, tamanho, personalizacao, observacoes });
+      renderTabela();
 
       document.getElementById('modelo').value = 'Flamengo 23/24';
       document.getElementById('tamanho').value = 'P';
       document.getElementById('personalizacao').value = '';
       document.getElementById('observacoes').value = '';
       atualizarImagem();
+    }
+
+    function renderTabela() {
+      const tabelaDiv = document.getElementById('tabelaPedidos');
+      if (pedidos.length === 0) return tabelaDiv.innerHTML = '';
+
+      let tabela = `<table><thead><tr><th>#</th><th>Modelo</th><th>Tamanho</th><th>Personalização</th><th>Observações</th></tr></thead><tbody>`;
+      pedidos.forEach((p, i) => {
+        tabela += `<tr><td>${i + 1}</td><td>${p.modelo}</td><td>${p.tamanho}</td><td>${p.personalizacao}</td><td>${p.observacoes}</td></tr>`;
+      });
+      tabela += '</tbody></table>';
+
+      tabelaDiv.innerHTML = tabela;
     }
 
     function finalizarPedidos() {
@@ -164,8 +188,8 @@
 
       const nome = pedidos[0].nome;
       const mensagem = pedidos.map((p, i) => {
-        const linkImg = imagensPorModelo[p.modelo] || '';
-        return `Camisa ${i + 1}:%0AModelo: ${p.modelo}%0ATamanho: ${p.tamanho}%0APersonalização: ${p.personalizacao || '-'}%0AObservações: ${p.observacoes || '-'}%0AImagem: ${window.location.origin}${linkImg}`;
+        const linkImg = window.location.origin + (imagensPorModelo[p.modelo] || '');
+        return `Camisa ${i + 1}:%0AModelo: ${p.modelo}%0ATamanho: ${p.tamanho}%0APersonalização: ${p.personalizacao || '-'}%0AObservações: ${p.observacoes || '-'}%0A🖼️ Imagem: ${linkImg}`;
       }).join('%0A%0A');
 
       const whatsappLink = `https://wa.me/5531992537858?text=🛒 Pedido de Camisas para ${nome}%0A%0A${mensagem}`;
