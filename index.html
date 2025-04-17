@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pedido de Camisa - EsportePremium</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #000000, #1a1a1a);
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      background-color: #000000;
+      color: #FFD700;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    form {
+      background: #111111;
+      color: white;
+      padding: 2rem;
+      margin-top: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+      max-width: 500px;
+      width: 90%;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #FFD700;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #FFD700;
+      border-radius: 6px;
+      font-size: 1rem;
+      background-color: #1a1a1a;
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #FFD700;
+      color: #000000;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #e6c200;
+    }
+
+    @media (max-width: 600px) {
+      form {
+        padding: 1.2rem;
+      }
+      header h1 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EsportePremium - Pedido de Camisa</h1>
+  </header>
+
+  <form action="/api/pedido" method="post">
+    <label for="nome">Nome:</label>
+    <input name="nome" id="nome" required>
+
+    <label for="modelo">Modelo:</label>
+    <select name="modelo" id="modelo">
+      <option>Flamengo 23/24</option>
+      <option>Palmeiras 23/24</option>
+      <option>Brasil Retro 2002</option>
+      <option>Real Madrid 23/24</option>
+      <option>Outros</option>
+    </select>
+
+    <label for="tamanho">Tamanho:</label>
+    <select name="tamanho" id="tamanho">
+      <option>P</option>
+      <option>M</option>
+      <option>G</option>
+      <option>GG</option>
+    </select>
+
+    <label for="personalizacao">Personalização:</label>
+    <input name="personalizacao" id="personalizacao">
+
+    <label for="observacoes">Observações:</label>
+    <textarea name="observacoes" id="observacoes"></textarea>
+
+    <button type="submit">Enviar Pedido</button>
+  </form>
+</body>
+</html>
