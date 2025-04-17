@@ -14,6 +14,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      color: white;
     }
 
     header {
@@ -65,19 +66,29 @@
       font-weight: bold;
       cursor: pointer;
       transition: background 0.3s ease;
+      margin-bottom: 10px;
     }
 
     button:hover {
       background-color: #e6c200;
     }
 
-    @media (max-width: 600px) {
-      form {
-        padding: 1.2rem;
-      }
-      header h1 {
-        font-size: 1.2rem;
-      }
+    table {
+      width: 90%;
+      margin-top: 2rem;
+      background: #1a1a1a;
+      border-collapse: collapse;
+      color: white;
+    }
+
+    th, td {
+      border: 1px solid #FFD700;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #333;
     }
   </style>
 </head>
@@ -86,7 +97,7 @@
     <h1>EsportePremium - Pedido de Camisa</h1>
   </header>
 
-  <form action="/api/pedido" method="post">
+  <form id="pedidoForm">
     <label for="nome">Nome:</label>
     <input name="nome" id="nome" required>
 
@@ -113,7 +124,88 @@
     <label for="observacoes">Observações:</label>
     <textarea name="observacoes" id="observacoes"></textarea>
 
-    <button type="submit">Enviar Pedido</button>
+    <button type="button" onclick="adicionarPedido()">Novo Pedido</button>
+    <button type="button" onclick="finalizarPedidos()">Finalizar e Enviar</button>
   </form>
+
+  <table id="tabelaPedidos" style="display:none">
+    <thead>
+      <tr>
+        <th>Modelo</th>
+        <th>Tamanho</th>
+        <th>Personalização</th>
+        <th>Observações</th>
+        <th>Remover</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const pedidos = [];
+
+    function adicionarPedido() {
+      const nome = document.getElementById('nome').value;
+      const modelo = document.getElementById('modelo').value;
+      const tamanho = document.getElementById('tamanho').value;
+      const personalizacao = document.getElementById('personalizacao').value;
+      const observacoes = document.getElementById('observacoes').value;
+
+      if (!nome || !modelo || !tamanho) {
+        alert('Preencha nome, modelo e tamanho.');
+        return;
+      }
+
+      pedidos.push({ nome, modelo, tamanho, personalizacao, observacoes });
+      atualizarTabela();
+
+      document.getElementById('modelo').value = 'Flamengo 23/24';
+      document.getElementById('tamanho').value = 'P';
+      document.getElementById('personalizacao').value = '';
+      document.getElementById('observacoes').value = '';
+    }
+
+    function atualizarTabela() {
+      const tabela = document.getElementById('tabelaPedidos');
+      const tbody = tabela.querySelector('tbody');
+      tbody.innerHTML = '';
+      pedidos.forEach((p, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.modelo}</td>
+          <td>${p.tamanho}</td>
+          <td>${p.personalizacao || '-'}</td>
+          <td>${p.observacoes || '-'}</td>
+          <td><button onclick="removerPedido(${i})">Remover</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      tabela.style.display = pedidos.length > 0 ? 'table' : 'none';
+    }
+
+    function removerPedido(index) {
+      pedidos.splice(index, 1);
+      atualizarTabela();
+    }
+
+    function finalizarPedidos() {
+      if (pedidos.length === 0) return alert('Adicione pelo menos um pedido.');
+
+      const nome = pedidos[0].nome;
+      const mensagem = pedidos.map((p, i) => `Camisa ${i + 1}:%0AModelo: ${p.modelo}%0ATamanho: ${p.tamanho}%0APersonalização: ${p.personalizacao || '-'}%0AObservações: ${p.observacoes || '-'}`).join('%0A%0A');
+      const whatsappLink = `https://wa.me/5531992537858?text=🛒 Pedido de Camisas para ${nome}%0A%0A${mensagem}`;
+
+      // Enviar cada pedido para o backend
+      pedidos.forEach(p => {
+        fetch('/api/pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(p)
+        });
+      });
+
+      window.location.href = whatsappLink;
+    }
+  </script>
 </body>
 </html>
