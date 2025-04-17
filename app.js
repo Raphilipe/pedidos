@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: 'esportepremium2024', resave: false, saveUninitialized: true }));
 
 app.post('/api/pedido', async (req, res) => {
