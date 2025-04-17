@@ -58,23 +58,62 @@ app.post('/admin/login', (req, res) => {
   }
 });
 
+// Parte do app.js (rota /admin/pedidos) com busca, ordenação e status colorido
+
 app.get('/admin/pedidos', async (req, res) => {
   if (!req.session.authenticated) return res.redirect('/admin/login');
-  const { rows } = await pool.query('SELECT * FROM pedidos ORDER BY data_pedido DESC');
-  const pendentes = rows.filter(p => p.status_envio === 'Aguardando pedido').length;
 
-  let html = `<h2 style="text-align:center">Pedidos Recebidos</h2>`;
+  const { q, sort } = req.query;
+  const { rows } = await pool.query('SELECT * FROM pedidos ORDER BY data_pedido DESC');
+
+  const pendentes = rows.filter(p => p.status_envio === 'Aguardando pedido').length;
+  const filtros = q ? q.toLowerCase() : '';
+  const pedidos = rows.filter(p => {
+    return !q ||
+      p.nome?.toLowerCase().includes(filtros) ||
+      p.codigo_rastreio?.toLowerCase().includes(filtros) ||
+      p.status_envio?.toLowerCase().includes(filtros);
+  });
+
+  if (sort === 'data') pedidos.sort((a, b) => new Date(b.data_pedido) - new Date(a.data_pedido));
+  if (sort === 'valor') pedidos.sort((a, b) => (b.valor_vendido || 0) - (a.valor_vendido || 0));
+
+  const totalVendido = pedidos.reduce((acc, p) => acc + (parseFloat(p.valor_vendido) || 0), 0);
+  const totalPago = pedidos.reduce((acc, p) => acc + (parseFloat(p.valor_pago) || 0), 0);
+
+  let html = `
+    <h2 style="text-align:center">Pedidos Recebidos</h2>
+    <form method="get" style="text-align:center; margin-bottom:10px">
+      <input name="q" placeholder="Buscar por nome, status ou código..." value="${q || ''}" style="padding:8px;width:250px" />
+      <button type="submit">Buscar</button>
+    </form>
+  `;
+
   if (pendentes > 0) {
     html += `<div style="background:yellow;padding:10px;text-align:center;font-weight:bold;color:black">⚠️ Há ${pendentes} pedido(s) com status 'Aguardando pedido'!</div>`;
   }
 
-  html += `<table border="1" cellspacing="0" cellpadding="8" style="width:98%;margin:auto;font-family:sans-serif;text-align:left">
+  html += `
+    <table border="1" cellspacing="0" cellpadding="8" style="width:98%;margin:auto;font-family:sans-serif;text-align:left">
+    <thead>
     <tr>
       <th>ID</th><th>Nome</th><th>Modelo</th><th>Tamanho</th><th>Personalização</th><th>Observações</th>
-      <th>Valor Vendido</th><th>Valor Pago</th><th>Status Envio</th><th>Código Rastreio</th><th>Data</th><th>Ações</th>
-    </tr>`;
+      <th><a href="?sort=valor">Valor Vendido</a></th><th>Valor Pago</th><th>Status Envio</th><th>Código Rastreio</th><th><a href="?sort=data">Data</a></th><th>Ações</th>
+    </tr>
+    </thead>
+    <tbody>
+  `;
 
-  rows.forEach(p => {
+  const coresStatus = {
+    'Aguardando pedido': 'orange',
+    'Pedido feito': 'blue',
+    'Pedido enviado': 'purple',
+    'Pedido recebido': 'gray',
+    'Pedido entregue': 'green'
+  };
+
+  pedidos.forEach(p => {
+    const cor = coresStatus[p.status_envio] || 'black';
     html += `
       <tr>
         <td>${p.id}</td>
@@ -88,7 +127,7 @@ app.get('/admin/pedidos', async (req, res) => {
           <td><input name="valor_vendido" value="${p.valor_vendido || ''}" style="width:90px" /></td>
           <td><input name="valor_pago" value="${p.valor_pago || ''}" style="width:90px" /></td>
           <td>
-            <select name="status_envio">
+            <select name="status_envio" style="color:${cor};font-weight:bold">
               ${['Aguardando pedido','Pedido feito','Pedido enviado','Pedido recebido','Pedido entregue'].map(opt => `<option value="${opt}" ${p.status_envio === opt ? 'selected' : ''}>${opt}</option>`).join('')}
             </select>
           </td>
@@ -99,11 +138,18 @@ app.get('/admin/pedidos', async (req, res) => {
             <a href="/admin/delete/${p.id}" onclick="return confirm('Tem certeza que deseja excluir?')">🗑️</a>
           </td>
         </form>
-      </tr>
-    `;
+      </tr>`;
   });
 
-  html += '</table>';
+  html += `</tbody>
+    <tfoot>
+      <tr><td colspan="6"><strong>Totais</strong></td>
+          <td><strong>R$ ${totalVendido.toFixed(2)}</strong></td>
+          <td><strong>R$ ${totalPago.toFixed(2)}</strong></td>
+          <td colspan="4"></td></tr>
+    </tfoot>
+  </table>`;
+
   res.send(html);
 });
 
