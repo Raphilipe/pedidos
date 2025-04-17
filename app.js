@@ -1,4 +1,4 @@
-// app.js com edição e exclusão na tela de administração
+// app.js com código de rastreio, dropdown de status e formatação
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -26,7 +26,7 @@ app.post('/api/pedido', async (req, res) => {
   const { nome, modelo, tamanho, personalizacao, observacoes } = req.body;
   try {
     await pool.query(
-      `INSERT INTO pedidos (nome, modelo, tamanho, personalizacao, observacoes) VALUES ($1, $2, $3, $4, $5)`,
+      `INSERT INTO pedidos (nome, modelo, tamanho, personalizacao, observacoes, status_envio) VALUES ($1, $2, $3, $4, $5, 'Aguardando pedido')`,
       [nome, modelo, tamanho, personalizacao, observacoes]
     );
     const mensagem = `Novo Pedido de Camisa:%0A👤 Nome: ${nome}%0A👕 Modelo: ${modelo}%0A📏 Tamanho: ${tamanho}%0A✍️ Personalização: ${personalizacao || 'Nenhuma'}%0A📝 Observações: ${observacoes || 'Nenhuma'}`;
@@ -61,11 +61,17 @@ app.post('/admin/login', (req, res) => {
 app.get('/admin/pedidos', async (req, res) => {
   if (!req.session.authenticated) return res.redirect('/admin/login');
   const { rows } = await pool.query('SELECT * FROM pedidos ORDER BY data_pedido DESC');
+  const pendentes = rows.filter(p => p.status_envio === 'Aguardando pedido').length;
 
-  let html = `<h2 style="text-align:center">Pedidos Recebidos</h2><table border="1" cellspacing="0" cellpadding="8" style="width:98%;margin:auto;font-family:sans-serif;text-align:left">
+  let html = `<h2 style="text-align:center">Pedidos Recebidos</h2>`;
+  if (pendentes > 0) {
+    html += `<div style="background:yellow;padding:10px;text-align:center;font-weight:bold;color:black">⚠️ Há ${pendentes} pedido(s) com status 'Aguardando pedido'!</div>`;
+  }
+
+  html += `<table border="1" cellspacing="0" cellpadding="8" style="width:98%;margin:auto;font-family:sans-serif;text-align:left">
     <tr>
       <th>ID</th><th>Nome</th><th>Modelo</th><th>Tamanho</th><th>Personalização</th><th>Observações</th>
-      <th>Valor Vendido</th><th>Valor Pago</th><th>Status Envio</th><th>Data</th><th>Ações</th>
+      <th>Valor Vendido</th><th>Valor Pago</th><th>Status Envio</th><th>Código Rastreio</th><th>Data</th><th>Ações</th>
     </tr>`;
 
   rows.forEach(p => {
@@ -81,7 +87,12 @@ app.get('/admin/pedidos', async (req, res) => {
           <input type="hidden" name="id" value="${p.id}" />
           <td><input name="valor_vendido" value="${p.valor_vendido || ''}" style="width:90px" /></td>
           <td><input name="valor_pago" value="${p.valor_pago || ''}" style="width:90px" /></td>
-          <td><input name="status_envio" value="${p.status_envio || ''}" style="width:110px" /></td>
+          <td>
+            <select name="status_envio">
+              ${['Aguardando pedido','Pedido feito','Pedido enviado','Pedido recebido','Pedido entregue'].map(opt => `<option value="${opt}" ${p.status_envio === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+            </select>
+          </td>
+          <td><input name="codigo_rastreio" value="${p.codigo_rastreio || ''}" style="width:140px" /></td>
           <td>${new Date(p.data_pedido).toLocaleString('pt-BR')}</td>
           <td>
             <button type="submit">Salvar</button>
@@ -97,10 +108,10 @@ app.get('/admin/pedidos', async (req, res) => {
 });
 
 app.post('/admin/update', async (req, res) => {
-  const { id, valor_vendido, valor_pago, status_envio } = req.body;
+  const { id, valor_vendido, valor_pago, status_envio, codigo_rastreio } = req.body;
   await pool.query(`
-    UPDATE pedidos SET valor_vendido=$1, valor_pago=$2, status_envio=$3 WHERE id=$4
-  `, [valor_vendido, valor_pago, status_envio, id]);
+    UPDATE pedidos SET valor_vendido=$1, valor_pago=$2, status_envio=$3, codigo_rastreio=$4 WHERE id=$5
+  `, [valor_vendido, valor_pago, status_envio, codigo_rastreio, id]);
   res.redirect('/admin/pedidos');
 });
 
