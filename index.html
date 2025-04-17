@@ -98,14 +98,17 @@
     <label for="nome">Nome:</label>
     <input name="nome" id="nome" required>
 
-    <label for="modelo">Modelo:</label>
-    <select name="modelo" id="modelo" onchange="atualizarImagem()">
-      <option>Flamengo 23/24</option>
-      <option>Palmeiras 23/24</option>
-      <option>Brasil Retro 2002</option>
-      <option>Real Madrid 23/24</option>
-      <option>Outros</option>
+    <label for="time">Time:</label>
+    <select id="time" onchange="atualizarModelos()">
+      <option value="Flamengo">Flamengo</option>
+      <option value="Palmeiras">Palmeiras</option>
+      <option value="Brasil">Brasil</option>
+      <option value="Real Madrid">Real Madrid</option>
+      <option value="Outros">Outros</option>
     </select>
+
+    <label for="modelo">Modelo:</label>
+    <select name="modelo" id="modelo" onchange="atualizarImagem()"></select>
 
     <label for="tamanho">Tamanho:</label>
     <select name="tamanho" id="tamanho">
@@ -131,13 +134,40 @@
 
   <script>
     const pedidos = [];
+
+    const modelosPorTime = {
+      "Flamengo": ["Flamengo 23/24", "Flamengo Treino", "Flamengo Retrô"],
+      "Palmeiras": ["Palmeiras 23/24", "Palmeiras Retrô"],
+      "Brasil": ["Brasil Retro 2002", "Brasil 2022"],
+      "Real Madrid": ["Real Madrid 23/24", "Real Madrid 2022"],
+      "Outros": ["Outros"]
+    };
+
     const imagensPorModelo = {
       "Flamengo 23/24": "/imagens/flamengo.jpg",
+      "Flamengo Treino": "/imagens/flamengo_treino.jpg",
+      "Flamengo Retrô": "/imagens/flamengo_retro.jpg",
       "Palmeiras 23/24": "/imagens/palmeiras.jpg",
+      "Palmeiras Retrô": "/imagens/palmeiras_retro.jpg",
       "Brasil Retro 2002": "/imagens/brasil.jpg",
+      "Brasil 2022": "/imagens/brasil_2022.jpg",
       "Real Madrid 23/24": "/imagens/realmadrid.jpg",
+      "Real Madrid 2022": "/imagens/realmadrid_2022.jpg",
       "Outros": "/imagens/outros.jpg"
     };
+
+    function atualizarModelos() {
+      const time = document.getElementById('time').value;
+      const modeloSelect = document.getElementById('modelo');
+      modeloSelect.innerHTML = '';
+      modelosPorTime[time].forEach(m => {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = m;
+        modeloSelect.appendChild(option);
+      });
+      atualizarImagem();
+    }
 
     function atualizarImagem() {
       const modelo = document.getElementById('modelo').value;
@@ -160,7 +190,7 @@
       pedidos.push({ nome, modelo, tamanho, personalizacao, observacoes });
       renderTabela();
 
-      document.getElementById('modelo').value = 'Flamengo 23/24';
+      document.getElementById('modelo').value = modelosPorTime[document.getElementById('time').value][0];
       document.getElementById('tamanho').value = 'P';
       document.getElementById('personalizacao').value = '';
       document.getElementById('observacoes').value = '';
@@ -205,7 +235,7 @@
       window.location.href = whatsappLink;
     }
 
-    window.onload = atualizarImagem;
+    window.onload = atualizarModelos;
   </script>
 </body>
 </html>
