@@ -108,12 +108,20 @@ app.get('/admin/pedidos', async (req, res) => {
 });
 
 app.post('/admin/update', async (req, res) => {
+  const parseOrNull = (v) => v === "" ? null : v;
   const { id, valor_vendido, valor_pago, status_envio, codigo_rastreio } = req.body;
   await pool.query(`
     UPDATE pedidos SET valor_vendido=$1, valor_pago=$2, status_envio=$3, codigo_rastreio=$4 WHERE id=$5
-  `, [valor_vendido, valor_pago, status_envio, codigo_rastreio, id]);
+  `, [
+    parseOrNull(valor_vendido),
+    parseOrNull(valor_pago),
+    status_envio,
+    codigo_rastreio,
+    id
+  ]);
   res.redirect('/admin/pedidos');
 });
+
 
 app.get('/admin/delete/:id', async (req, res) => {
   const id = req.params.id;
