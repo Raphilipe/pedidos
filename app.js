@@ -1,4 +1,4 @@
-// app.js com código de rastreio, dropdown de status e formatação
+// app.js completo com filtros, ordenação, cores nos status, totais e correção de caractere inválido
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -57,8 +57,6 @@ app.post('/admin/login', (req, res) => {
     res.send('Acesso negado');
   }
 });
-
-// Parte do app.js (rota /admin/pedidos) com busca, ordenação e status colorido
 
 app.get('/admin/pedidos', async (req, res) => {
   if (!req.session.authenticated) return res.redirect('/admin/login');
@@ -138,7 +136,8 @@ app.get('/admin/pedidos', async (req, res) => {
             <a href="/admin/delete/${p.id}" onclick="return confirm('Tem certeza que deseja excluir?')">🗑️</a>
           </td>
         </form>
-      </tr>`;
+      </tr>
+    `;
   });
 
   html += `</tbody>
@@ -167,7 +166,6 @@ app.post('/admin/update', async (req, res) => {
   ]);
   res.redirect('/admin/pedidos');
 });
-
 
 app.get('/admin/delete/:id', async (req, res) => {
   const id = req.params.id;
