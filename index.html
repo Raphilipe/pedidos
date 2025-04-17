@@ -1,193 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pedido de Camisa - EsportePremium</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to bottom right, #000000, #1a1a1a);
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      color: white;
-    }
-    header {
-      width: 100%;
-      background-color: #000000;
-      color: #FFD700;
-      padding: 1rem;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }
-    form {
-      background: #111111;
-      color: white;
-      padding: 2rem;
-      margin-top: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-      max-width: 500px;
-      width: 90%;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #FFD700;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #FFD700;
-      border-radius: 6px;
-      font-size: 1rem;
-      background-color: #1a1a1a;
-      color: white;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #FFD700;
-      color: #000000;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      margin-bottom: 10px;
-    }
-    button:hover {
-      background-color: #e6c200;
-    }
-    table {
-      width: 90%;
-      margin-top: 2rem;
-      background: #1a1a1a;
-      border-collapse: collapse;
-      color: white;
-    }
-    th, td {
-      border: 1px solid #FFD700;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #333;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EsportePremium - Pedido de Camisa</title>
 </head>
-<body>
-  <header>
-    <h1>EsportePremium - Pedido de Camisa</h1>
-  </header>
+<body style="font-family: sans-serif; text-align: center; padding: 2rem">
+  <h1>Pedido de Camisa</h1>
   <form id="pedidoForm">
-    <label for="nome">Nome:</label>
-    <input name="nome" id="nome" required>
-    <label for="modelo">Modelo:</label>
-    <select name="modelo" id="modelo">
-      <option>Flamengo 23/24</option>
-      <option>Palmeiras 23/24</option>
-      <option>Brasil Retro 2002</option>
-      <option>Real Madrid 23/24</option>
-      <option>Outros</option>
-    </select>
-    <label for="tamanho">Tamanho:</label>
+    <input name="nome" id="nome" placeholder="Seu nome" required /><br /><br />
+
+    <select name="modelo" id="modelo" onchange="atualizarImagem()">
+      <option value="Flamengo 23/24">Flamengo 23/24</option>
+      <option value="Palmeiras 23/24">Palmeiras 23/24</option>
+      <option value="Brasil Retro 2002">Brasil Retro 2002</option>
+      <option value="Real Madrid 23/24">Real Madrid 23/24</option>
+      <option value="Outros">Outros</option>
+    </select><br /><br />
+
     <select name="tamanho" id="tamanho">
-      <option>P</option>
-      <option>M</option>
-      <option>G</option>
-      <option>GG</option>
-    </select>
-    <label for="personalizacao">Personalização:</label>
-    <input name="personalizacao" id="personalizacao">
-    <label for="observacoes">Observações:</label>
-    <textarea name="observacoes" id="observacoes"></textarea>
-    <button type="button" onclick="adicionarPedido()">Novo Pedido</button>
-    <button type="button" onclick="finalizarPedidos()">Finalizar e Enviar</button>
+      <option value="P">P</option>
+      <option value="M">M</option>
+      <option value="G">G</option>
+      <option value="GG">GG</option>
+    </select><br /><br />
+
+    <input name="personalizacao" id="personalizacao" placeholder="Personalização" /><br /><br />
+    <textarea name="observacoes" id="observacoes" placeholder="Observações"></textarea><br /><br />
+
+    <img id="previewImagem" src="/imagens/flamengo.jpg" alt="Imagem da camisa" style="width:200px;display:block;margin:auto;border:1px solid #ccc" /><br />
+
+    <button type="button" onclick="finalizarPedido()">Finalizar e Enviar</button>
   </form>
-  <table id="tabelaPedidos" style="display:none">
-    <thead>
-      <tr>
-        <th>Modelo</th>
-        <th>Tamanho</th>
-        <th>Personalização</th>
-        <th>Observações</th>
-        <th>Remover</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+
   <script>
-    const pedidos = [];
-    function getCamposDoFormulario() {
-      return {
-        nome: document.getElementById('nome').value,
-        modelo: document.getElementById('modelo').value,
-        tamanho: document.getElementById('tamanho').value,
-        personalizacao: document.getElementById('personalizacao').value,
-        observacoes: document.getElementById('observacoes').value
-      };
+    const imagensPorModelo = {
+      "Flamengo 23/24": "/imagens/flamengo.jpg",
+      "Palmeiras 23/24": "/imagens/palmeiras.jpg",
+      "Brasil Retro 2002": "/imagens/brasil.jpg",
+      "Real Madrid 23/24": "/imagens/realmadrid.jpg",
+      "Outros": "/imagens/outros.jpg"
+    };
+
+    function atualizarImagem() {
+      const modelo = document.getElementById('modelo').value;
+      const imgPath = imagensPorModelo[modelo] || '/imagens/outros.jpg';
+      document.getElementById('previewImagem').src = imgPath;
     }
-    function adicionarPedido() {
-      const dados = getCamposDoFormulario();
-      if (!dados.nome || !dados.modelo || !dados.tamanho) {
-        alert('Preencha nome, modelo e tamanho.');
-        return;
-      }
-      pedidos.push(dados);
-      atualizarTabela();
-      document.getElementById('modelo').value = 'Flamengo 23/24';
-      document.getElementById('tamanho').value = 'P';
-      document.getElementById('personalizacao').value = '';
-      document.getElementById('observacoes').value = '';
-    }
-    function atualizarTabela() {
-      const tabela = document.getElementById('tabelaPedidos');
-      const tbody = tabela.querySelector('tbody');
-      tbody.innerHTML = '';
-      pedidos.forEach((p, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${p.modelo}</td>
-          <td>${p.tamanho}</td>
-          <td>${p.personalizacao || '-'}</td>
-          <td>${p.observacoes || '-'}</td>
-          <td><button onclick="removerPedido(${i})">Remover</button></td>
-        `;
-        tbody.appendChild(tr);
+
+    function finalizarPedido() {
+      const nome = document.getElementById('nome').value;
+      const modelo = document.getElementById('modelo').value;
+      const tamanho = document.getElementById('tamanho').value;
+      const personalizacao = document.getElementById('personalizacao').value;
+      const observacoes = document.getElementById('observacoes').value;
+      const imagemLink = imagensPorModelo[modelo] || '';
+
+      const texto = `🛒 Pedido de Camisa:%0A👤 Nome: ${nome}%0A👕 Modelo: ${modelo}%0A📏 Tamanho: ${tamanho}%0A✍️ Personalização: ${personalizacao || '-'}%0A📝 Observações: ${observacoes || '-'}%0A🖼️ Imagem: ${window.location.origin}${imagemLink}`;
+
+      fetch('/api/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ nome, modelo, tamanho, personalizacao, observacoes })
       });
-      tabela.style.display = pedidos.length > 0 ? 'table' : 'none';
-    }
-    function removerPedido(index) {
-      pedidos.splice(index, 1);
-      atualizarTabela();
-    }
-    function finalizarPedidos() {
-      if (pedidos.length === 0) {
-        const dados = getCamposDoFormulario();
-        if (!dados.nome || !dados.modelo || !dados.tamanho) {
-          return alert('Preencha nome, modelo e tamanho.');
-        }
-        pedidos.push(dados);
-      }
-      const nome = pedidos[0].nome;
-      const mensagem = pedidos.map((p, i) => `Camisa ${i + 1}:%0AModelo: ${p.modelo}%0ATamanho: ${p.tamanho}%0APersonalização: ${p.personalizacao || '-'}%0AObservações: ${p.observacoes || '-'}`).join('%0A%0A');
-      const whatsappLink = `https://wa.me/5531992537858?text=🛒 Pedido de Camisas para ${nome}%0A%0A${mensagem}`;
-      pedidos.forEach(p => {
-        fetch('/api/pedido', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(p)
-        });
-      });
-      window.location.href = whatsappLink;
+
+      window.location.href = `https://wa.me/5531992537858?text=${texto}`;
     }
   </script>
 </body>
